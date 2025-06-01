@@ -1,0 +1,6 @@
+like element donot contain text you should be doing like this
+<script>
+<title id =" something">kei xa
+</title>
+</script>
+tile= getElementById("something).innerText;
