@@ -1,0 +1,30 @@
+<!-- // lets create a todo application  -->
+ <html> 
+<script>
+  function addTodo()
+  {
+    const title = document.getElementById("title").value;
+    const description = document.getElementById("description").value;
+     
+document.getElementById("heading").innerText=title;
+ document.getElementById("des").innerText=description;
+// yesari chalxa but lets append it it need to be appended
+// ${} is called templating
+  }
+</script>
+
+  <div> 
+    
+    
+      <input id ="title" type="text" placeholder="title"></input>
+         <input id="description" type="text" placeholder="description"></input>
+    <button onclick="addTodo()"> add here</button>
+    </div>
+  <div>
+    <h1> Added your work list</h1>
+    <h2 id="heading">
+</h2>
+    <p id="des"> </p>
+    
+  </div>
+</html>
