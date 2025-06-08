@@ -1,0 +1,14 @@
+nav {
+  height: 25px;
+  display: flex;
+justify-content: space-between;
+  margin-left: 40px;
+  margin-right: 40px;
+}
+
+.buttonharu {
+  width: 10%;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
