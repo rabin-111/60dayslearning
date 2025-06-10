@@ -1,0 +1,15 @@
+#LSPPDay3
+ 
+Today I  created a simple react app, spend time understanding packages, syntax, jsx,app and how css is applied and how underhood dom is applied
+code -->
+@lftechnology
+ 
+#60DaysOfLearning2025  #LearningWithLeapfrog
+
+
+
+
+
+
+https://docs.google.com/forms/d/e/1FAIpQLSfXxdP4wT5oAkiO3zzQcKY1wrlkEnkieG-IbXG3F4-me81ByQ/viewform
+https://x.com/Rabin_poudel_
