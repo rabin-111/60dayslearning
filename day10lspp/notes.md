@@ -107,3 +107,9 @@ function Appbar() {
 }
 
 export default App
+
+
+
+
+
+today mine react setup is stuck so i read and watched the cohort. i will surely implement it tommmmorrow
