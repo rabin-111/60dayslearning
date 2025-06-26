@@ -1,0 +1,125 @@
+In this lecture, Harkirat offers a brief introduction to `TypeScript`, covering language classifications, the importance of strong typing, and an overview of TypeScript's execution. The lecture includes insights into the TypeScript compiler, implementing basic types, and understanding the distinctions between `Interfaces` and `Types`
+
+
+
+# Types of Languages
+
+## 1] Loosely Typed Languages
+
+1. **Runtime Type Association:** Data types are associated with values at runtime. Unlike strongly typed languages, type information is not strictly bound during compilation but rather at the time of execution.
+2. **Dynamic Type Changes:** Variables can change types during execution, offering more adaptability. This flexibility allows for a dynamic approach to variable assignments and operations.
+3. **Runtime Error Discovery:** Type errors may be discovered during runtime, potentially leading to unexpected behaviors. This characteristic provides more freedom but requires careful handling.
+4. **Examples of Loosely Typed Languages: J**avaScript, Python, Ruby
+
+## C++ Code (Doesn't Work ❌)
+
+```cpp
+#include <iostream>
+
+int main() {
+  int number = 10;
+  number = "text";  // Error: Cannot assign a string to an integer variable
+  return 0;
+}
+```
+
+**Explanation:**
+
+- C++ is a statically-typed language, meaning variable types must be declared and are enforced at compile-time.
+
+- In the given code, `number` is declared as an integer (`int`), and attempting to assign a string ("text") to it results in a compile-time error.
+- The type mismatch between the declared type and the assigned value leads to a compilation failure.
+
+## 2] Strongly Typed Languages
+
+1. **Compile-Time Enforcement:** The data type of a variable is strictly enforced during compilation. This means that the compiler checks and ensures that variables are used in a way that is consistent with their types at compile time.
+2. **Type Safety:** The compiler or interpreter guarantees that operations are performed only on compatible types. This ensures that type-related errors are caught early in the development process.
+3. **Early Error Detection:** Type errors are identified and addressed at compile-time, providing early feedback to developers. This leads to increased reliability and reduces the likelihood of runtime errors.
+4. **Examples of Strongly Typed Languages:** Java, C#, TypeScript
+
+## JavaScript Code (Does Work ✅)
+
+
+function main() {
+  let number = 10;
+  number = "text";  // Valid: JavaScript allows dynamic typing
+  return number;
+}
+​
+Explanation:
+JavaScript is a dynamically-typed language, allowing variables to change types during runtime.
+In the provided JavaScript code, number is initially assigned the value 10 (a number), and later, it is assigned the value "text" (a string).
+JavaScript allows this flexibility, and the code executes without type-related errors.
+Considerations:
+Statically-typed languages like C++ provide early error detection during compilation, ensuring type consistency.
+Dynamically-typed languages like JavaScript offer flexibility but may require careful handling to avoid unexpected runtime errors.
+The choice between strongly typed and loosely typed languages depends on project requirements, developer preferences, and the balance between early error detection and flexibility during development. Each type has its advantages and considerations, influencing their suitability for specific use cases.
+
+
+# Typescript
+
+## Why Typescript
+
+JavaScript is a powerful and widely used programming language, but it has a dynamic typing system, which means variable types are determined at runtime. While dynamic typing provides flexibility, it can lead to runtime errors that are challenging to catch during development.
+
+## What Typescript
+
+In response to these challenges, Microsoft introduced TypeScript, a superset of JavaScript that adds static typing to the language. TypeScript is designed to address some of the limitations of JavaScript by providing developers with a more robust type system.
+
+
+## How Typescript
+
+1. **Static Typing:**
+    - TypeScript introduces static typing, allowing developers to declare the types of variables, parameters, and return values at compile-time.
+    - Static typing helps catch potential errors during development, offering a level of code safety that may not be achievable in pure JavaScript.
+2. **Compatibility with JavaScript:**
+    - TypeScript is a superset of JavaScript, meaning that any valid JavaScript code is also valid TypeScript code.
+    - Developers can gradually adopt TypeScript in existing JavaScript projects without the need for a full rewrite.
+3. **Tooling Support:**
+    - TypeScript comes with a rich set of tools and features for development, including code editors (like Visual Studio Code) with built-in TypeScript support.
+    - The TypeScript compiler (tsc) translates TypeScript code into plain JavaScript, allowing it to run in any JavaScript environment.
+4. **Enhanced IDE Experience:**
+    - IDEs (Integrated Development Environments) that support TypeScript offer improved code navigation, autocompletion, and better refactoring capabilities.
+    - TypeScript's type information enhances the overall development experience.
+5. **Interfaces and Type Declarations:**
+    - TypeScript introduces concepts like interfaces and type declarations, enabling developers to define clear contracts for their code.
+    - Interfaces help document the shape of objects, making it easier to understand and maintain the code.
+6. **Compilation:**
+    - TypeScript code is transpiled to JavaScript during the compilation process, ensuring that the resulting code is compatible with various JavaScript environments and browsers.
+
+> Overall, TypeScript provides developers with the benefits of static ty
+>
+
+> flexibility and features of JavaScript. It has gained popularity in large-scale applications and projects where maintaining code quality and catching errors early are crucial.
+> 
+
+# **Execution of TypeScript Code**
+
+TypeScript code doesn't run natively in browsers or JavaScript environments. Instead, it undergoes a compilation process to generate equivalent JavaScript code. Here's an overview of how TypeScript code is executed:
+
+1. **Writing TypeScript Code:**
+    - Developers write TypeScript code using `.ts` or `.tsx` files, employing TypeScript's syntax with features like static typing, interfaces, and type annotations.
+
+1. **TypeScript Compiler (tsc):**
+    - The TypeScript Compiler (`tsc`) is a command-line tool that processes TypeScript code.
+    - Developers run `tsc` to initiate the compilation process.
+
+1. **Compilation Process:**
+    - The TypeScript Compiler parses and analyzes the TypeScript code, checking for syntax errors and type-related issues.
+    - It generates equivalent JavaScript code, typically in one or more `.js` or `.jsx` files.
+
+1. **Generated JavaScript Code:**
+    - The output JavaScript code closely resembles the original TypeScript code but lacks TypeScript-specific constructs like type annotations.
+    - TypeScript features that aren't present in JavaScript (e.g., interfaces) are often transpiled or emitted in a way that doesn't affect runtime behavior.
+
+
+1. **JavaScript Execution:**
+    - The generated JavaScript code can now be executed by any JavaScript runtime or browser.
+    - Developers can include the resulting JavaScript files in HTML documents or use them in Node.js environments.
+
+1. **Runtime Environment:**
+    - In the chosen runtime environment, the JavaScript code is interpreted or compiled by the JavaScript engine (e.g., V8 in Chrome, SpiderMonkey in Firefox).
+    - Just-in-time (JIT) compilation or interpretation occurs to convert the code into machine code that the computer's processor can execute.
+
+1. **Interacting with the DOM (Browser Environments):**
+    - In browser environments, the JavaScript code, generated from TypeScript, may interact with the Document Object Model (DOM) to manipulate web page structure and behavior.
