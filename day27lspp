@@ -1,0 +1,125 @@
+# Basic Types in Typescript
+
+In TypeScript, basic types serve as the building blocks for defining the data types of variables. Here's an overview of some fundamental types provided by TypeScript:
+
+1. **Number:**
+    - Represents numeric values.
+    - Example:
+        
+        ```tsx
+        let age: number = 25;
+        ```
+        
+2. **String:**
+    - Represents textual data (sequences of characters).
+    - Example:
+        
+        ```tsx
+        let name: string = "John";
+        ```
+        
+3. **Boolean:**
+    - Represents true or false values.
+    - Example:
+        
+        ```tsx
+        let isStudent: boolean = true;
+        ```
+        
+4. **Null:**
+    - Represents the absence of a value.
+
+
+
+
+
+  - Example:
+    
+    ```tsx
+    let myVar: null = null;
+    ```
+    
+5. **Undefined:**
+    - Represents a variable that has been declared but not assigned a value.
+    - Example:
+        
+        ```tsx
+        let myVar: undefined = undefined;
+        ```
+        
+
+# Problems and Code Implementation
+
+## 1] **Hello World Greeting**
+
+
+
+          **Objective:** 
+
+Learn how to give types to function arguments in TypeScript.
+
+**Task:**
+Write a TypeScript function named `greet` that takes a user's first name as an argument and logs a greeting message to the console.
+
+**Function Signature:**
+
+```tsx
+function greet(firstName: string): void {
+    // Implementation goes here
+}
+```
+
+**Solution:**
+
+```tsx
+function greet(firstName: string): void {
+    console.log("Hello " + firstName);
+}
+
+// Example Usage
+greet("harkirat");
+```
+
+**Explanation:**
+
+1. **Function Definition (`function greet(firstName: string): void`):**
+    - The `greet` function is declared with a parameter named `firstName`.
+    - `: string` indicates that the `firstName` parameter must be
+
+  Function Body (console.log("Hello " + firstName);):
+Inside the function body, a console.log statement prints a greeting message to the console.
+The message includes the provided firstName parameter.
+Function Invocation (greet("harkirat");):
+The function is called with the argument "harkirat".
+The provided argument must be a string, aligning with the specified type in the function definition.
+This example demonstrates the basic usage of TypeScript types in function parameters, ensuring that the expected data type is enforced and catching errors related to type mismatches during development.
+2] Sum Function
+Objective: 
+Learn how to assign a return type to a function in TypeScript.
+Task: 
+Write a TypeScript function named sum that takes two numbers as arguments and returns their sum. Additionally, invoke the function with an example.
+Function Signature:
+function sum(a: number, b: number): number {
+
+    // Implementation goes here
+}
+​
+Solution:
+function sum(a: number, b: number): number {
+    return a + b;
+}
+
+// Example Usage
+console.log(sum(2, 3));
+​
+Explanation:
+Function Definition (function sum(a: number, b: number): number):
+The sum function is declared with two parameters, a and b, both of type number.
+: number indicates that the function returns a value of type number.
+Function Body (return a + b;):
+Inside the function body, the sum of a and b is calculated using the + operator.
+The result is then returned.
+Function Invocation (console.log(sum(2, 3));):
+The function is called with the arguments 2 and 3.
+The result is logged to the console using console.log.
+This example showcases how to specify th
