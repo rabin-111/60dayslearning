@@ -1,0 +1,64 @@
+Assignment 1
+Problem: Create a function isLegal that returns true or false if a user is above 18. It takes a user as an input.
+Solution:
+// Define an interface to specify the structure of a user object
+interface User {
+  firstName: string;
+  lastName: string;
+  email: string;
+  age: number;
+}
+
+// Create a function 'isLegal' that checks if a user is above 18
+function isLegal(user: User): boolean {
+    // Check if the user's age is greater than 18
+    if (user.age > 18) {
+        return true; // Return true if the user is legal
+    } else {
+        return false; // Return false if the user is not legal
+    }
+}
+
+
+
+
+```tsx
+}
+```
+
+**Code Explanation:**
+
+- An interface "User" is defined to enforce the structure of a user object with properties: firstName, lastName, email, and age.
+- The function "isLegal" takes a user object as input and checks if the user's age is greater than 18.
+- It returns true if the user is legal (age > 18) and false otherwise.
+
+### Assignment 2
+
+Problem: Create a React component that takes todos as an input and renders them.
+
+Solution:
+
+```tsx
+// Define an interface to specify the structure of a todo object
+interface TodoType {
+  title: string;
+  description: string;
+  done: boolean;
+}
+
+// Define the input prop for the Todo component
+interface TodoInput {
+  todo: TodoType;
+}
+
+// Create a React component 'Todo' that takes a 'todo' prop and renders it
+function Todo({ todo }: TodoInput): JSX.Element {
+  return (
+    <div>
+      <h1>{todo.title}</h1>
+      <h2>{todo.description}</h2>
+      {/* Additional rendering logic can be added for other properties */}
+    </div>
+```
+    };
+    }
