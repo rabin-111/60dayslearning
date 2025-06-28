@@ -19,6 +19,11 @@ function isLegal(user: User): boolean {
     }
 }
 
+**Code Explanation:**
+
+- An interface "TodoType" is defined to specify the structure of a todo with properties: title, description, and done.
+- An interface "TodoInput" is defined to specify the input prop for the Todo component.
+- The React component "Todo" takes a prop "todo" of type "TodoType" and renders its properties (title and description).
 
 
 
