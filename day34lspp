@@ -1,0 +1,381 @@
+# Selecting Your Database
+
+Prisma supports a variety of databases, including relational databases like MySQL and PostgreSQL, as well as the document-oriented database MongoDB (in Preview). Selecting and configuring your database with Prisma involves updating the `schema.prisma` file and setting the database connection URL in your environment variables. Here's how you can do it:
+
+### Step 1: Update `schema.prisma` for Your Database
+
+The `schema.prisma` file contains a `datasource` block where you specify your database connection. You need to update the `provider` field according to the database you want to use.
+
+### For PostgreSQL
+
+```jsx
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+```
+
+### For MySQL
+
+```jsx
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+```
+
+### For MongoDB (Preview)
+
+```jsx
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+```
+
+### Step 2: Set Your Database Connection URL
+
+The `url` field in the `datasource` block references an environment variable `DATABASE_URL` where you should set your database connection string. This is done in the `.env` file in the root of your project.
+
+### Example `.env` Content for PostgreSQL
+
+```
+DATABASE_URL="postgresql://username:password@localhost:5432/mydatabase"
+```
+
+Replace `username`, `password`, `localhost`, `5432`, and `mydatabase` with your actual database credentials and details.
+
+### Example `.env` Content for MySQL
+
+```
+DATABASE_URL="mysql://username:password@localhost:3306/mydatabase"
+```
+
+### Example `.env` Content for MongoDB
+
+```
+DATABASE_URL="mongodb+srv://username:password@cluster0.example.mongodb.net/mydatabase"
+```
+
+### Step 3: Install the Prisma VSCode Extension
+
+To enhance your development experience with Prisma, it's highly recommended to install the Prisma VSCode extension. This extension provides features like syntax highlighting, formatting, auto-completion, and a visual overview of your Prisma schema.
+
+You can install the Prisma extension directly from the Visual Studio Code Marketplace:
+
+1. Open VSCode.
+2. Go to the Extensions view by clicking on the square icon on the sidebar or pressing `Ctrl+Shift+X`
+3. Search for "Prisma".
+4. Find the Prisma extension by Prisma and click "Install".
+
+> Remember, when using MongoDB with Prisma, it's currently in Preview, so it's a good idea to keep an eye on the official Prisma documentation for any updates or changes.
+> 
+
+# Defining Models
+
+Defining your data model in Prisma involves specifying the structure of your database tables and their relationships directly in the `schema.prisma` file. This schema acts as a blueprint for your database, allowing Prisma to generate the necessary code to interact with your data in a type-safe manner. Let's walk through the process of defining a data model for a simple application with Users and Todos tables, and then generating the corresponding migrations to update your database schema.
+
+### Step 1: Define Your Data Model in `schema.prisma`
+
+To add a Users and a Todos table to your application, you'll define two models in your `schema.prisma` file: `User` and `Todo`. At this stage, we won't worry about defining relationships between these tables.
+
+```tsx
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Or your database provider of choice
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int     @id @default(autoincrement())
+  username  String  @unique
+  password  String
+  firstName String
+  lastName  String
+}
+
+model Todo {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  done        Boolean @default(false)
+  userId      Int     // This will later be used to establish a relationship
+}
+```
+
+In this schema:
+
+- Each `model` keyword defines a table in your database.
+- The fields within each model represent columns in the table.
+- Attributes like `@id`, `@default(autoincrement())`, and `@unique` specify column constraints and behaviors.
+
+### Step 2: Generate Migrations
+
+After defining your data model, the next step is to generate migrations to create these tables in your database. Prisma Migrate translates changes in your Prisma schema into SQL migration files, which are then applied to your database to update its schema.
+
+Run the following command to generate and apply migrations:
+
+```bash
+npx prisma migrate dev --name initialize_schema
+```
+
+This command does a few things:
+
+- It generates SQL migration files that represent the schema changes (in this case, creating the `User` and `Todo` tables).
+- It applies these migrations to your database, creating the tables.
+- It generates or updates the Prisma Client, which you use to interact with your database in your application code.
+
+### Step 3: Inspect the Migrations Folder
+
+After running the migrations, you can find them in the `prisma/migrations` folder in your project directory. Each migration is stored in a separate folder, named with a timestamp and the name you provided (`initialize_schema` in this case). Inside, you'll find:
+
+- A `migration.sql` file containing the SQL commands that were run against your database.
+- A `README.md` file with information about the migration.
+
+Inspecting these files can give you insights into the exact changes made to your database schema.
+
+> By defining your data model in the `schema.prisma` file and using Prisma Migrate, you've successfully created a Users and a Todos table in your database without manually writing any SQL.
+> 
+
+This process not only simplifies database schema management but also ensures that your application's data model is version-controlled and easily reproducible across different environments.
+
+# Exploring Your Databases
+
+Exploring your database with `psql` after Prisma has created tables for you is a straightforward process. `psql` is a command-line interface for interacting with PostgreSQL that allows you to execute queries, view table structures, and manage your database. Here's how you can use `psql` to explore the tables created by Prisma:
+
+### Step 1: Connect to Your Database
+
+Open your terminal and use the `psql` command to connect to your PostgreSQL database. Replace `localhost`, `postgres`, and `postgres` with your database's host, database name, and user, respectively, if they are different.
+
+```bash
+psql -h localhost -d postgres -U postgres
+```
+
+You might be prompted to enter the password for the PostgreSQL user.
+
+### Step 2: List Tables
+
+Once connected, you can list all the tables in your database using the `\\dt` command.
+
+```sql
+\\dt
+```
+
+This command will display a list of tables, including those created by Prisma. You should see the `User` and `Todo` tables listed if you followed the previous steps to define your data model and run migrations.
+
+### Step 3: Describe Table Structure
+
+To get detailed information about the structure of a specific table, use the `\\d` command followed by the table name. For example, to describe the `User` table:
+
+```sql
+\\d "User"
+```
+
+This will show you the columns, their data types, and any constraints or indexes associated with the table.
+
+### Step 4: Query Data
+
+You can also execute SQL queries directly to retrieve data from your tables. For instance, to select all records from the `User` table:
+
+```sql
+SELECT * FROM "User";
+```
+
+### Step 5: Exit `psql`
+
+When you're done exploring, you can exit `psql` by typing `\\q` and pressing Enter.
+
+```sql
+\\q
+```
+
+> Using `psql` to explore your database gives you a direct view of the underlying structure and data. It's a powerful tool for database administration and can be particularly useful for verifying the results of ORM operations, such as those performed by Prisma. Whether you're developing, debugging, or simply curious about the state of your database, `psql` provides the necessary commands to interact with and inspect your PostgreSQL database effectively.
+> 
+
+# Prisma Client
+
+### What is a Prisma Client?
+
+The Prisma Client is an auto-generated and type-safe query builder that's tailored to your data model. It provides a fluent API that lets you compose queries in a way that is both intuitive and close to natural language. The client abstracts away the SQL layer, offering methods that correspond to various database operations, such as creating, reading, updating, and deleting records.
+
+### How Does the Prisma Client Work?
+
+When you use Prisma Client in your application, you write code like this:
+
+```jsx
+const newUser = await prisma.user.create({
+  data: {
+    email: "harkirat@gmail.com",
+  },
+});
+```
+
+Under the hood, Prisma Client converts this operation into an SQL query similar to:
+
+```jsx
+INSERT INTO users (email) VALUES ('harkirat@gmail.com');
+```
+
+This conversion is handled automatically, so you don't need to write SQL queries manually.
+
+### How to Generate the Prisma Client?
+
+After defining your data model in the `schema.prisma` file, you can generate the Prisma Client by running the following command in your terminal:
+
+```bash
+npx prisma generate
+```
+
+This command reads your Prisma schema and generates the client code accordingly. The generated client includes all the necessary functions to interact with your database based on the models you've defined.
+
+### Using the Generated Prisma Client
+
+Once generated, you can import and use the Prisma Client in your Node.js application to perform database operations. Here's an example of how you might use the client in an async function:
+
+```jsx
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  const newUser = await prisma.user.create({
+    data: {
+      email: "harkirat@gmail.com",
+    },
+  });
+  console.log(newUser);
+}
+
+main()
+  .catch(e => {
+    throw e;
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+```
+
+In this example, we're using the `create` method on the `user` model to insert a new user into the database. The Prisma Client provides similar methods for other CRUD operations and supports complex queries, including filtering, sorting, and joining data across tables.
+
+# Creating Your First Application
+
+## 1] Insert
+
+Creating a function to insert data into the **`Users`** table using Prisma in a TypeScript application
+
+The provided solution defines an asynchronous function `insertUser` that takes four parameters: `username`, `password`, `firstName`, and `lastName`. This function uses the Prisma Client to insert a new user into the `Users` table with the provided details.
+
+```jsx
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+async function insertUser(username: string, password: string, firstName: string, lastName: string) {
+  const res = await prisma.user.create({
+    data: {
+        username,
+        password,
+        firstName,
+        lastName
+    }
+  });
+  console.log(res);
+}
+
+insertUser("admin1", "123456", "harkirat", "singh");
+```
+
+Here's a breakdown of the key parts of this function:
+
+- **Prisma Client Initialization**: `const prisma = new PrismaClient();` creates a new instance of the Prisma Client. This instance is used to perform operations on your database.
+- **The `insertUser` Function**: This is an asynchronous function, indicated by the `async` keyword. It's designed to insert a new user into the database.
+- **Inserting Data**: `prisma.user.create()` is a method provided by the Prisma Client to create (or insert) a new record in the `user` table. The method takes an object with a `data` property, which itself is an object containing the fields to be inserted into the table.
+- **Awaiting the Promise**: The `await` keyword is used to wait for the promise returned by `prisma.user.create()` to resolve. This is necessary because database operations are asynchronous.
+- **Logging the Result**: The result of the insert operation (the newly created user record) is stored in the `res` variable and then logged to the console.
+- **Executing the Function**: Finally, `insertUser("admin1", "123456", "harkirat", "singh");` calls the function with sample data. In a real application, you would likely call this function in response to user input, such as a form submission.
+
+## 2] **Update**
+
+Updating data in the **`Users`** table using Prisma in a TypeScript application involves specifying the criteria for selecting the user to update and providing the new data for the selected fields.
+
+The solution defines an asynchronous function `updateUser` that takes a `username` and an object containing the new `firstName` and `lastName` values. This function uses the Prisma Client to update the specified user in the database.
+
+```jsx
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+interface UpdateParams {
+    firstName: string;
+    lastName: string;
+}
+
+async function updateUser(username: string, {
+    firstName,
+    lastName
+}: UpdateParams) {
+  const res = await prisma.user.update({
+    where: { username },
+    data: {
+      firstName,
+      lastName
+    }
+  });
+  console.log(res);
+}
+
+updateUser("admin1", {
+    firstName: "new name",
+    lastName: "singh"
+});
+```
+
+Here's a breakdown of the key components:
+
+- **Prisma Client Initialization**: `const prisma = new PrismaClient();` creates a new instance of the Prisma Client, which is used to interact with your database.
+- **The `UpdateParams` Interface**: This TypeScript interface defines the shape of the object expected by the `updateUser` function for the update operation. It specifies that both `firstName` and `lastName` should be strings.
+- **The `updateUser` Function**: This asynchronous function is designed to update a user's `firstName` and `lastName` in the database. It takes a `username` to identify the user to update and an `UpdateParams` object containing the new values.
+- **Updating Data**: `prisma.user.update()` is a method provided by the Prisma Client to update a record in the `user` table. It requires two main arguments:
+    - `where`: An object specifying the criteria to find the record to update. In this case, it's the `username` of the user.
+    - `data`: An object containing the fields to update and their new values.
+- **Awaiting the Promise**: The `await` keyword pauses execution until the promise returned by `prisma.user.update()` is resolved, ensuring the update operation completes before proceeding.
+- **Logging the Result**: The result of the update operation (the updated user record) is stored in the `res` variable and then logged to the console.
+- **Executing the Function**: The function is called with a sample `username` and new values for `firstName` and `lastName`. In a real application, these values would likely come from user input.
+
+## 3] Get a User’s Detail
+
+Fetching a user's details from the database based on their username can be done efficiently using Prisma Client.
+
+The solution defines an asynchronous function `getUser` that takes a `username` as an argument. This function uses the Prisma Client to find the first user that matches the given `username`.
+
+```jsx
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+async function getUser(username: string) {
+  const user = await prisma.user.findFirst({
+    where: {
+        username: username
+    }
+  });
+  console.log(user);
+}
+
+getUser("admin1");
+```
+
+Here's a breakdown of the key components:
+
+- **Prisma Client Initialization**: `const prisma = new PrismaClient();` creates a new instance of the Prisma Client, which is used to interact with your database.
+- **The `getUser` Function**: This asynchronous function is designed to fetch a user's details from the database. It takes a `username` to identify the user.
+- **Fetching Data**: `prisma.user.findFirst()` is a method provided by the Prisma Client to retrieve the first record that matches the given criteria from the `user` table. It requires an object with a `where` clause:
+    - `where`: An object specifying the criteria to find the record. In this case, it's looking for a user with a matching `username`.
+- **Awaiting the Promise**: The `await` keyword is used to wait for the promise returned by `prisma.user.findFirst()` to resolve. This is necessary because database operations are asynchronous.
+- **Logging the Result**: The result of the fetch operation (the user record) is stored in the `user` variable and then logged to the console.
+- **Executing the Function**: The function is called with a sample `username` of "admin1". In a real application, this value would likely come from user input, such as a login form or a search query.
