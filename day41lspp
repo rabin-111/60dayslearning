@@ -1,0 +1,205 @@
+Building Medium
+Up until now, our discussions have primarily revolved around theoretical concepts. In this lecture, Harkirat takes a practical approach by guiding us through the hands-on process of building a Medium like application 
+We'll be applying the knowledge we've gained so far, specifically focusing on implementing the frontend using React and the backend using Cloudflare Workers — creating a modern fullstack application.
+While there are no specific notes provided for this section, a mini guide is outlined below to assist you in navigating through the process of building the application. Therefore, it is strongly advised to actively follow along during the lecture for a hands-on learning experience.
+Step 1 — The stack
+We’ll be building medium in the following stack
+React in the frontend
+Cloudflare workers in the backend
+zod as the validation library, type inference for the frontend types
+Typescript as the language
+Prisma as the ORM, with connection pooling
+Postgres as the database
+jwt for authentication (Cookies approach explained in the end as well)
+Step 2 - Initialize the backend
+Whenever you’re building a project, usually the first thing you should do is initialise the project’s backend.
+Create a new folder called medium
+mkdir medium
+cd medium
+​
+Initialize a hono based cloudflare worker app
+npm create hono@latest
+​
+Target directory › backend
+Which template do you want to use? - cloudflare-workers
+Do you want to install project dependencies? … yes
+Which package manager do you want to use? › npm (or yarn or bun, doesnt matter)
+💡​
+Reference https://hono.dev/top
+Step 3 - Initialize handlers
+To begin with, our backend will have 4 routes
+POST /api/v1/signup
+POST /api/v1/signin
+POST /api/v1/blog
+PUT /api/v1/blog
+GET /api/v1/blog/:id
+💡​
+https://hono.dev/api/routing
+Solution
+Step 4 - Initialize DB (prisma)
+1. Get your connection url from neon.db or aieven.tech
+postgres://avnadmin:password@host/db
+​
+2. Get connection pool URL from Prisma accelerate
+https://www.prisma.io/data-platform/accelerate
+prisma://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiNTM2M2U5ZjEtNmNjMS00MWNkLWJiZTctN2U4NzFmMGFhZjJmIiwidGVuYW50X2lkIjoiY2I5OTE2NDk0MzFkNWZmZWRmNmFiYzViMGFlOTIwYzFhZDRjMGY5MTg1ZjZiNDY0OTc3MzgyN2IyMzY2OWIwMiIsImludGVybmFsX3NlY3JldCI6Ijc0NjE4YWY2LTA4NmItNDM0OC04MzIxLWMyMmY2NDEwOTExNyJ9.HXnE3vZjf8YH71uOollsvrV-TSe41770FPG_O8IaVgs
+​
+3. Initialize prisma in your project
+Make sure you are in the backend folder
+npm i prisma
+npx prisma init
+​
+Replace DATABASE_URL in .env
+DATABASE_URL="postgres://avnadmin:password@host/db"
+​
+Add DATABASE_URL as the connection pool url in wrangler.toml
+name = "backend"
+compatibility_date = "2023-12-01"
+
+[vars]
+DATABASE_URL = "prisma://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiNTM2M2U5ZjEtNmNjMS00MWNkLWJiZTctN2U4NzFmMGFhZjJmIiwidGVuYW50X2lkIjoiY2I5OTE2NDk0MzFkNWZmZWRmNmFiYzViMGFlOTIwYzFhZDRjMGY5MTg1ZjZiNDY0OTc3MzgyN2IyMzY2OWIwMiIsImludGVybmFsX3NlY3JldCI6Ijc0NjE4YWY2LTA4NmItNDM0OC04MzIxLWMyMmY2NDEwOTExNyJ9.HXnE3vZjf8YH71uOollsvrV-TSe41770FPG_O8IaVgs"
+​
+💡​
+You should not have your prod URL committed either in .env or in wrangler.toml to github
+wranger.toml should have a dev/local DB url
+.env should be in .gitignore
+4. Initialize the schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  name     String?
+  password String
+  posts    Post[]
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  published Boolean  @default(false)
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+}
+​
+5. Migrate your database
+npx prisma migrate dev --name init_schema
+​
+💡​
+You might face issues here, try changing your wifi if that happens
+6. Generate the prisma client
+npx prisma generate --no-engine
+​
+7. Add the accelerate extension
+npm install @prisma/extension-accelerate
+​
+8. Initialize the prisma client
+import { PrismaClient } from '@prisma/client/edge'
+import { withAccelerate } from '@prisma/extension-accelerate'
+
+const prisma = new PrismaClient({
+    datasourceUrl: env.DATABASE_URL,
+}).$extends(withAccelerate())
+​
+Step 5 - Create routes
+1. Simple Signup route
+Add the logic to insert data to the DB, and if an error is thrown, tell the user about it
+Solution
+app.post('/api/v1/signup', async (c) => {
+	const prisma = new PrismaClient({
+		datasourceUrl: c.env?.DATABASE_URL,
+	}).$extends(withAccelerate());
+	const body = await c.req.json();
+	try {
+		const user = await prisma.user.create({
+			data: {
+				email: body.email,
+				password: body.password
+			}
+		});
+
+		return c.text('jwt here')
+	} catch(e) {
+		return c.status(403);
+	}
+})
+​
+To get the right types on c.env, when initializing the Hono app, pass the types of env as a generic
+const app = new Hono<{
+	Bindings: {
+		DATABASE_URL: string
+	}
+}>();
+​
+Ideally you shouldn’t store passwords in plaintext. You should hash before storing them. More details on how you can do that - 
+https://community.cloudflare.com/t/options-for-password-hashing/138077https://developers.cloudflare.com/workers/runtime-apis/web-crypto/
+2. Add JWT to signup route
+Also add the logic to return the user a jwt when their user id encoded. 
+This would also involve adding a new env variable JWT_SECRET to wrangler.toml
+Use jwt provided by hono - https://hono.dev/helpers/jwt
+Solution
+import { PrismaClient } from '@prisma/client/edge'
+import { withAccelerate } from '@prisma/extension-accelerate'
+import { Hono } from 'hono';
+import { sign } from 'hono/jwt'
+
+// Create the main Hono app
+const app = new Hono<{
+	Bindings: {
+		DATABASE_URL: string,
+		JWT_SECRET: string,
+	}
+}>();
+
+
+app.post('/api/v1/signup', async (c) => {
+	const prisma = new PrismaClient({
+		datasourceUrl: c.env?.DATABASE_URL	,
+	}).$extends(withAccelerate());
+
+	const body = await c.req.json();
+	try {
+		const user = await prisma.user.create({
+			data: {
+				email: body.email,
+				password: body.password
+			}
+		});
+		const jwt = await sign({ id: user.id }, c.env.JWT_SECRET);
+		return c.json({ jwt });
+	} catch(e) {
+		c.status(403);
+		return c.json({ error: "error while signing up" });
+	}
+})
+​
+3. Add a signin route
+Solution
+app.post('/api/v1/signin', async (c) => {
+	const prisma = new PrismaClient({
+		datasourceUrl: c.env?.DATABASE_URL	,
+	}).$extends(withAccelerate());
+
+	const body = await c.req.json();
+	const user = await prisma.user.findUnique({
+		where: {
+			email: body.email
+		}
+	});
+
+	if (!user) {
+		c.status(403);
+		return c.json({ error: "user not found" });
+	}
+
+	const jwt = await sign({ id: user.id }, c.env.JWT_SECRET);
+	return c.json({ jwt });
+})
