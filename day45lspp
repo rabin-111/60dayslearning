@@ -1,0 +1,95 @@
+In this lecture, Harkirat introduces `Next.js, a React framework` that simplifies the development of server-rendered React applications. He highlights the benefits of Next.js over traditional React applications, such as built-in `server-side rendering`, `API routes`, `file-based routing`, and `optimizations` for bundle size and static site generation. Harkirat addresses the `waterfalling` issue, explores Next.js offerings, and guides through project setup, `file structure`, `routing`, `layouts`, and the use of `client components`.
+
+## Pre-requisites
+
+Before diving into Next.js 14, it's essential to have a solid understanding of basic frontend development concepts and React. Here's what you need to know:
+
+1. **HTML, CSS, and JavaScript**: Familiarize yourself with the fundamentals of web development, including HTML for structuring content, CSS for styling, and JavaScript for adding interactivity.
+2. **React Basics**: Learn the core concepts of React, such as components, state, props, and lifecycle methods. Understand how to create simple React applications and manage component hierarchies.
+
+```jsx
+import React, { useState } from 'react';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  const incrementCount = () => {
+    setCount(count + 1);
+  };
+
+  return (
+    <div>
+      <h1>Count: {count}</h1>
+      <button onClick={incrementCount}>Increment</button>
+    </div>
+  );
+}
+```
+
+This is a simple React component that demonstrates state management and event handling.
+
+# Next.js Introduction
+
+Next.js is a popular React framework that simplifies the development of server-rendered React applications. It was introduced to address some of the challenges and inconveniences faced in traditional React development.
+
+### Problems Addressed by Next.js
+
+1. **Separate Backend Project for API Routes**: In a traditional React project, you often need to maintain a separate backend project for handling API routes and server-side logic. Next.js provides a built-in API routes feature, allowing you to handle API requests directly within your Next.js application.
+2. **Routing**: React doesn't provide out-of-the-box routing capabilities, requiring the use of third-party libraries like React Router. Next.js comes with a built-in file-based routing system, making it easier to manage routes and handle navigation.
+3. **SEO Optimization**: React applications are rendered on the client-side by default, which can negatively impact search engine optimization (SEO). Next.js supports server-side rendering (SSR) and static site generation (SSG), ensuring that your application is SEO-friendly and optimized for search engines.
+4. **Waterfalling Problem**: In traditional React applications, the entire application bundle needs to be downloaded before the application can start rendering, leading to a "waterfalling" effect. Next.js addresses this issue by supporting code splitting and lazy loading, allowing for faster initial load times and improved performance.
+
+### React Server Components (RSC)
+
+While React was initially not optimized for SEO, the introduction of React Server Components (RSC) in Next.js 13 has improved this aspect. RSC allows you to render components on the server, providing better SEO and performance benefits. We'll discuss RSC in more detail later in this guide.
+
+> In the next sections, we'll explore these problems and the solutions provided by Next.js in greater depth, along with code examples and practical implementations.
+> 
+
+# SEO Optimization
+
+Search engines like Google and Bing use web crawlers (also known as bots or spiders) to discover and index websites. These crawlers visit websites and analyze the HTML content to understand what the website is about and how to rank it in search results.
+
+However, traditional client-side rendered (CSR) React applications pose a challenge for SEO because the crawlers typically don't execute JavaScript and render the page to see the final output. Instead, they rely on the initial HTML response received from the server.
+
+### Googlebot and JavaScript
+
+While Googlebot (Google's web crawler) can execute JavaScript to a certain extent, dynamically generated content is still harder for the crawler to index effectively. This is where the issue lies with CSR React applications.
+
+To illustrate this, let's visit a React website built with Vite and TypeScript: https://blog-six-tan-47.vercel.app/signup
+
+When you visit this URL, you'll notice that the initial HTML response doesn't contain any meaningful content related to the application. It only shows a basic HTML structure with references to Vite, React, and TypeScript.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React + TS</title>
+    <script type="module" crossorigin src="/assets/index.d3f2e1c9.js"></script>
+    <link rel="stylesheet" href="/assets/index.e1c4b2f0.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+```
+
+This is because the actual content of the React application is rendered dynamically using JavaScript after the initial HTML is loaded. While the content will eventually be rendered and visible to users, search engine crawlers like Googlebot may have difficulty discovering and indexing this dynamically generated content effectively.
+
+### Next.js Solution
+
+Next.js addresses this SEO challenge by providing two powerful rendering techniques: Server-Side Rendering (SSR) and Static Site Generation (SSG).
+
+### Server-Side Rendering (SSR)
+
+With SSR, Next.js pre-renders the initial page on the server and sends the fully rendered HTML to the client. This means that search engine crawlers can easily index the content without having to execute JavaScript. 
+
+### Static Site Generation (SSG)
+
+Next.js also supports Static Site Generation (SSG), which pre-renders pages at build time and serves them as static HTML files. This approach is particularly useful for content-heavy websites or blogs, where the content doesn't change frequently. Here's an example of using SSG in Next.js:
+
+> By leveraging SSR and SSG, Next.js provides a robust solution for SEO optimization, ensuring that your React application's content is easily discoverable and indexable by search engines like Google and Bing.
+>
