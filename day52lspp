@@ -1,0 +1,1057 @@
+In this offline lecture, Harkirat covered authentication using JWT with localStorage, and authentication using cookies. He explained the implementation details, properties of cookies, and how the SameSite attribute helps mitigate CSRF attacks. Lastly, we see a fullstack implementation
+What is Authentication?
+Authentication is a crucial security process that allows users to securely access websites, applications, or systems by verifying their identities. It is the process of confirming that a user is who they claim to be, typically through the use of credentials such as a username and password or other authentication methods.
+
+The authentication process typically involves the following steps:
+User Identification: The user provides their unique identifier, such as a username, email address, or other identifying information.
+Credential Verification: The user submits their credentials, such as a password, biometric data (e.g., fingerprint or facial recognition), or other authentication factors.
+Credential Validation: The system compares the provided credentials against the stored credentials in a secure database or authentication server.
+Access Granted or Denied: If the provided credentials match the stored credentials, the user is authenticated, and access is granted. If the credentials do not match, access is denied, and the user may be prompted to try again or follow additional authentication steps.
+Authentication can be implemented using various methods, including:
+Username and Password: This is the most common form of authentication, where users provide a unique username and a corresponding password.
+Single Sign-On (SSO): SSO allows users to access multiple applications or services with a single set of credentials, eliminating the need to log in separately for each application.
+Multi-Factor Authentication (MFA): MFA adds an extra layer of security by requiring users to provide additional authentication factors beyond just a username and password, such as a one-time code sent to their mobile device or a biometric factor like a fingerprint or facial recognition.
+Passwordless Authentication: This method eliminates the need for traditional passwords by using alternative authentication factors like magic links, push notifications, or biometric data.
+Auth using JWT & Localstorage
+1. Signup
+The signup process typically involves the following steps:
+a. The client (e.g., a web application) sends a POST request to the server with the user's registration details, such as username, email, and password.
+b. The server validates the provided information and creates a new user account in the database.
+c. Upon successful registration, the server generates a JWT containing the user's information (e.g., user ID, email) and signs it with a secret key.
+d. The server sends the generated JWT back to the client.
+e. The client stores the received JWT in the browser's localStorage or another secure storage mechanism.
+Example code snippet (server-side):
+// Assuming you have a User model and a JWT utility function
+const newUser = await User.create({ username, email, password });
+const token = generateJWT({ userId: newUser.id, email: newUser.email });
+res.json({ token });
+​
+
+2. Signin
+The signin process typically involves the following steps:
+a. The client sends a POST request to the server with the user's credentials (e.g., email and password).
+b. The server verifies the provided credentials against the stored user information in the database.
+c. If the credentials are valid, the server generates a new JWT containing the user's information and signs it with a secret key.
+d. The server sends the generated JWT back to the client.
+e. The client stores the received JWT in the browser's localStorage or another secure storage mechanism.
+Example code snippet (server-side):
+// Assuming you have a User model and a JWT utility function
+const user = await User.findOne({ email });
+if (!user || !user.validatePassword(password)) {
+  return res.status(401).json({ error: 'Invalid credentials' });
+}
+const token = generateJWT({ userId: user.id, email: user.email });
+res.json({ token });
+​
+
+3. Auth Requests
+For authenticated requests, the client includes the JWT in the Authorization header of the request.
+Example code snippet (client-side):
+const token = localStorage.getItem('token');
+fetch('/protected-route', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+  .then(response => response.json())
+  .then(data => {
+    // Handle the response data
+  })
+  .catch(error => {
+    // Handle the error
+  });
+​
+On the server-side, the JWT is verified and decoded to extract the user's information. If the JWT is valid, the server processes the request; otherwise, it returns an unauthorized error.
+Example code snippet (server-side):
+// Assuming you have a JWT utility function
+const token = req.headers.authorization.split(' ')[1];
+try {
+  const decoded = verifyJWT(token);
+  // Attach the user information to the request object
+  req.user = decoded;
+  // Proceed with the request
+  next();
+} catch (err) {
+  res.status(401).json({ error: 'Invalid token' });
+}
+​
+
+Using JWT and localStorage for authentication has several advantages, such as stateless authentication (no server-side session management) and the ability to securely transmit user information in the JWT payload. However, it's important to handle JWT expiration, revocation, and secure storage on the client-side to mitigate potential security risks.
+Auth Using Cookies
+What are Cookies?
+Cookies are small pieces of data sent from a website and stored on the user's computer by the user's web browser while the user is browsing. They are designed to be a reliable mechanism for websites to remember information about the user's session or preferences.
+Cookies serve several purposes in web development, including:
+Session Management: Cookies allow websites to identify users and track their individual session states across multiple pages or visits. This is particularly useful for maintaining user authentication and ensuring a seamless browsing experience.
+Personalization: Websites use cookies to personalize content and advertisements based on the user's preferences or browsing history.
+Tracking: Cookies can track users across websites, providing insights into browsing behavior. This information can be used for analytics purposes, to improve website functionality, or for targeted advertising.
+Security: Secure cookies can be used to enhance the security of a website by ensuring that the transmission of information is only done over an encrypted connection, helping to prevent unauthorized access to user data.
+In the context of authentication, we will be focusing on the security aspect of cookies (point 4).
+Why not use localStorage?
+While both cookies and localStorage provide ways to store data on the client-side, they serve different purposes and have different characteristics.
+The key difference is that cookies are automatically sent with every request to the website by the browser, whereas localStorage data needs to be explicitly included in the request headers.
+This automatic inclusion of cookies with every request becomes particularly important in frameworks like Next.js, where we'll explore its significance later.
+Here's an example from the provided source code (frontend/src/pages/SendMoney.jsx):
+const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/send-money`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ amount, receiver }),
+  credentials: "include", // This line is important for cookies
+});
+​
+In this example, the credentials: "include" option is used to ensure that cookies are included in the request sent to the server. This is crucial for cookie-based authentication, as the server relies on the presence of the authentication cookie to verify the user's identity.
+Additional Characteristics of Cookies
+Cookies have some additional characteristics that make them suitable for authentication purposes:
+Expiry: Cookies can have an expiry date or duration attached to them, allowing for session management and automatic logout after a certain period of inactivity.
+Restrictions: Cookies can be restricted to only work over HTTPS connections and to specific domains, enhancing security and preventing unauthorized access.
+While cookies are commonly used for authentication purposes, it's important to note that they should be used in conjunction with other security measures, such as HTTPS encryption and secure cookie flags, to ensure the protection of sensitive user data.
+In the subsequent sections, we will explore the implementation details of cookie-based authentication, including server-side session management and client-side handling of authentication cookies.
+Auth Cookies Implementation
+1. Signup
+
+During the signup process, the server typically performs the following steps:
+a. The client sends a POST request to the server with the user's registration details, such as username, email, and password.
+b. The server validates the provided information and creates a new user account in the database.
+c. Upon successful registration, the server generates a session ID or token that represents the authenticated user.
+d. The server sets an HTTP cookie with the session ID or token in the response headers.
+e. The client's browser receives the response and stores the cookie for future requests.
+Example server-side code (using Express.js):
+app.post('/signup', async (req, res) => {
+  const { username, email, password } = req.body;
+
+  // Create a new user in the database
+  const newUser = await User.create({ username, email, password });
+
+  // Generate a session ID or token
+  const sessionId = generateSessionId();
+
+  // Set the session ID or token as a cookie
+  res.cookie('sessionId', sessionId, { httpOnly: true, secure: true });
+
+  res.status(201).json({ message: 'User registered successfully' });
+});
+​
+2. Signin
+
+During the signin process, the server typically performs the following steps:
+a. The client sends a POST request to the server with the user's credentials (e.g., email and password).
+b. The server verifies the provided credentials against the stored user information in the database.
+c. If the credentials are valid, the server generates a new session ID or token that represents the authenticated user.
+d. The server sets an HTTP cookie with the new session ID or token in the response headers.
+e. The client's browser receives the response and updates or creates a new cookie with the provided session ID or token.
+Example server-side code (using Express.js):
+app.post('/signin', async (req, res) => {
+  const { email, password } = req.body;
+
+  // Find the user in the database
+  const user = await User.findOne({ email });
+
+  // Verify the password
+  if (!user || !user.validatePassword(password)) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  // Generate a new session ID or token
+  const sessionId = generateSessionId();
+
+  // Set the session ID or token as a cookie
+  res.cookie('sessionId', sessionId, { httpOnly: true, secure: true });
+
+  res.status(200).json({ message: 'User signed in successfully' });
+});
+​
+3. Auth Endpoints
+
+For authenticated endpoints, the server typically performs the following steps:
+a. The client sends a request to the server, including the cookie with the session ID or token.
+b. The server receives the request and extracts the session ID or token from the cookie.
+c. The server verifies the session ID or token against the stored session data (e.g., in a database or in-memory store).
+d. If the session ID or token is valid, the server processes the request and returns the appropriate response.
+e. If the session ID or token is invalid or expired, the server returns an unauthorized error.
+Example server-side code (using Express.js):
+app.get('/protected', async (req, res) => {
+  const sessionId = req.cookies.sessionId;
+
+  // Verify the session ID or token
+  const session = await Session.findOne({ sessionId });
+
+  if (!session) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Process the request and return the response
+  res.status(200).json({ message: 'Protected data' });
+});
+​
+Automatic Cookie Handling
+One of the advantages of using cookies for authentication is that the browser automatically includes the cookie in every request to the server. This means you don't need to explicitly set the cookie header in the client-side code (e.g., fetch requests or Axios requests).
+The browser automatically handles the inclusion of cookies based on the server's response headers and the cookie settings (e.g., domain, path, and expiration).
+This automatic cookie handling simplifies the client-side code and ensures that the authentication cookie is always included in requests to the server, without the need for additional client-side logic.
+Properties of Cookies
+Types of Cookies
+Persistent Cookies: These cookies remain stored on the user's device even after the browser is closed. They have an expiration date or a maximum age set, and they persist until that date or until the user manually clears them.
+Session Cookies: These cookies are temporary and are deleted when the user closes the browser or the browsing session ends. They are typically used for storing session-related data and are not stored permanently on the user's device.
+Properties of Cookies
+Secure: When this property is set, the cookie is only sent over secure, encrypted connections (HTTPS). This helps prevent the cookie from being intercepted during transmission.
+HttpOnly: When this property is set, the cookie cannot be accessed or modified by client-side scripts (e.g., JavaScript). This helps mitigate cross-site scripting (XSS) attacks, where an attacker might try to steal or manipulate the cookie's value.
+SameSite: This property controls when a cookie should be sent in cross-site requests. It helps mitigate cross-site request forgery (CSRF) attacks by restricting cookies from being sent in certain cross-origin scenarios. The possible values are:
+Strict: The cookie is only sent in requests originating from the same site (same origin).
+Lax: The cookie is sent in cross-site requests, but only if the request is a top-level navigation (e.g., clicking a link) or a GET request.
+None: The cookie is sent in all cross-site requests, regardless of the request method or origin.
+Domain: This property specifies the domain(s) for which the cookie should be sent. By default, cookies are only sent to the domain that set them, but you can specify a broader domain to allow the cookie to be sent to subdomains as well.
+CSRF Attacks and SameSite
+Cross-Site Request Forgery (CSRF) attacks were a common issue before the introduction of the SameSite attribute. These attacks exploit the fact that cookies are automatically sent with requests, even if those requests originate from a different site.
+Let's explore a few scenarios with different SameSite values:
+SameSite: none:
+In this case, the cookie is sent with all cross-site requests, regardless of the request method or origin.
+This setting makes the application vulnerable to CSRF attacks, as an attacker can potentially trigger unwanted actions on the target site by inducing the victim's browser to send a request with the cookie.
+
+SameSite: Strict:
+With this setting, the cookie is only sent in requests originating from the same site (same origin).
+This effectively mitigates CSRF attacks, as the cookie is not sent in cross-site requests, preventing the attacker from leveraging the victim's authenticated session.
+
+Problem
+
+SameSite: Lax:
+In this case, the cookie is sent in cross-site requests, but only if the request is a top-level navigation (e.g., clicking a link) or a GET request.
+This setting provides some protection against CSRF attacks, as the cookie is not sent in cross-site POST requests, which are commonly used to trigger state-changing actions on the target site.
+
+However, there's a potential problem with the "Lax" setting. While it mitigates CSRF attacks involving POST requests, it still allows the cookie to be sent in cross-site GET requests initiated by top-level navigations. This means that an attacker could potentially exploit CSRF vulnerabilities by inducing the victim to click on a link that triggers a cross-site GET request with the cookie.
+Example in express (Backend)
+Initialize an empty TS project
+npm init -y
+npx tsc --init
+​
+Update rootDir and outDir
+"roodDir": "./src"
+"outDir": "./dist"
+​
+Add required libraries
+import express from "express";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import path from "path";
+​
+Initialize express app, add middlewares
+const app = express();
+app.use(cookieParser());
+app.use(express.json());
+app.use(cors({
+    credentials: true,
+    origin: "http://localhost:5173"
+}));
+​
+Add a dummy signin endpoint
+app.post("/signin", (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password;
+    // do db validations, fetch id of user from db
+    const token = jwt.sign({
+        id: 1
+    }, JWT_SECRET);
+    res.cookie("token", token);
+    res.send("Logged in!");
+});
+​
+Add a protected backend route
+app.get("/user", (req, res) => {
+    const token = req.cookies.token;
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    // Get email of the user from the database
+    res.send({
+        userId: decoded.id
+    })
+});
+​
+Add a logout route
+app.post("/logout", (req, res) => {
+    res.cookie("token", "ads");
+    res.json({
+        message: "Logged out!"
+    })
+});
+​
+Listen on port 3000
+app.listen(3000);
+​
+Code - https://github.com/100xdevs-cohort-2/week-16-auth-1
+Frontend in React
+Initialize an empty react project
+Add a signin page
+import { useState } from "react"
+import { BACKEND_URL } from "../config"
+import axios from "axios"
+
+export const Signin = () => {
+    const [username, setUsername] = useState("")
+    const [password, setPassword] = useState("")
+
+    return <div>
+        <input onChange={(e) => {
+            setUsername(e.target.value);
+        }} type="text" placeholder="username" />
+        <input onChange={(e) => {
+            setPassword(e.target.value);
+        }} type="password" placeholder="password" />
+        <button onClick={async () => {
+            await axios.post(`${BACKEND_URL}/signin`, {
+                username,
+                password
+            }, {
+                withCredentials: true,
+            });
+            alert("you are logged in")
+        }}>Submit</button>
+    </div>
+}
+​
+Add a user page
+import axios from "axios";
+import { useEffect, useState } from "react"
+import { BACKEND_URL } from "../config";
+
+export const User = () => {
+    const [userData, setUserData] = useState();
+
+    useEffect(() => {
+        axios.get(`${BACKEND_URL}/user`, {
+            withCredentials: true,
+          })
+            .then(res => {
+                setUserData(res.data);
+            })
+    }, []);
+
+    return <div>
+        You're id is {userData?.userId}
+        <br /><br />
+        <button onClick={() => {
+            axios.post(`${BACKEND_URL}/logout`, {}, {
+                withCredentials: true,
+            })
+        }}>Logout</button>
+    </div>
+}
+​
+Add routing
+import './App.css'
+
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Signup } from './components/Signup';
+import { Signin } from './components/Signin';
+import { User } from './components/User';
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path={"/signup"} element={<Signup />} />
+        <Route path={"/signin"} element={<Signin />} />
+        <Route path={"/user"} element={<User />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
+
+export default App
+​
+Code - https://github.com/100xdevs-cohort-2/week-16-auth-1
+Frontend from express
+Add an index.html file in src folder of backend
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+
+<input id="username" type="text" placeholder="username" />
+<input id="password" type="password" placeholder="password" />
+<button id="loginButton">Submit</button>
+<button id="logoutButton">Logout</button>
+<div id="userData"></div>
+
+
+<script>
+
+    document.getElementById('loginButton').addEventListener('click', async () => {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            await axios.post(`/signin`, {
+                username,
+                password
+            });
+            alert("You are logged in");
+        } catch (error) {
+            console.error('Login failed:', error);
+            alert("Login failed");
+        }
+    });
+
+    document.getElementById('logoutButton').addEventListener('click', () => {
+        axios.post(`/logout`, {}, {
+            withCredentials: true,
+        }).then(() => {
+            console.log('Logged out successfully.');
+        }).catch(error => {
+            console.error('Logout failed:', error);
+        });
+    });
+
+    function fetchUserData() {
+        axios.get(`/user`, {
+            withCredentials: true,
+        }).then(response => {
+            const userData = response.data;
+            displayUserData(userData);
+        }).catch(error => {
+            console.error('Failed to fetch user data:', error);
+        });
+    }
+
+    function displayUserData(userData) {
+        const userDataDiv = document.getElementById('userData');
+        // Example: Assumes userData contains a 'name' and 'email'. Adapt based on your actual user data structure.
+        userDataDiv.innerHTML = `<p>Your id is: ${userData.userId}</p>`;
+    }
+    fetchUserData();
+</script>
+
+</body>
+</html>
+​
+Add a route that sends this html file
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "../src/index.html"))
+})
+​
+Remove credentials from cors
+app.use(cors());
+
+
+In this lecture, Harkirat covers `NextAuth.js`, a library for authentication in Next.js apps. He explains the rationale behind using it, setting up `catch-all routes`, adding `OAuth providers` like Google and GitHub, implementing custom `credential providers`, and creating `custom sign-in pages`
+
+# NextAuth
+
+### **What is NextAuth?**
+
+NextAuth is a popular authentication library specifically designed for Next.js applications. It provides a comprehensive solution for implementing authentication in your Next.js projects, making it easier to handle user sign-in, sign-up, and session management.
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/2f8ed72b-aa73-46e0-b12f-6ed86c1708fa/Untitled.png)
+
+### **Can you do authentication without NextAuth?**
+
+Yes, it is possible to implement authentication in a Next.js application without using NextAuth. However, doing so requires you to handle various aspects of authentication manually, such as managing user sessions, implementing secure cookie handling, and integrating with different authentication providers (e.g., OAuth, email/password, etc.).
+
+### **Should you implement authentication without NextAuth?**
+
+While it is technically possible to implement authentication without NextAuth, it is generally not recommended, especially for larger or more complex applications. NextAuth simplifies the authentication process by providing a well-structured and secure approach, saving you from reinventing the wheel and potentially introducing security vulnerabilities.
+
+### **Popular Choices for Authentication**
+
+When it comes to implementing authentication in web applications, there are several popular choices available:
+
+1. **External Authentication Providers**:
+    - **Auth0** (https://auth0.com/): Auth0 is a popular identity management platform that offers a comprehensive suite of authentication and authorization services. It supports various authentication methods, including social logins, enterprise connections, and custom databases.
+    - **Clerk** (https://clerk.com/): Clerk is another authentication and user management solution that provides embeddable UIs, flexible APIs, and admin dashboards for managing users in your application.
+2. **Firebase Authentication**: Firebase, a comprehensive app development platform by Google, includes a robust authentication service. It supports various authentication methods, including email/password, social logins, and phone authentication.
+3. **In-house Authentication Using Cookies**: Some developers choose to implement authentication in-house by managing user sessions using cookies. This approach requires handling session management, secure cookie handling, and integrating with different authentication providers manually.
+4. **NextAuth**: As mentioned earlier, NextAuth is a popular choice for implementing authentication in Next.js applications. It provides a streamlined and secure approach to handling authentication, offering built-in support for various authentication providers and session management strategies.
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/9dd3ac05-53ba-4e78-8e94-fe316a1da93b/Untitled.png)
+
+While external authentication providers like Auth0 and Clerk offer comprehensive solutions with additional features like user management and multi-factor authentication, they may come with additional costs or complexity. Firebase Authentication, on the other hand, is a part of the broader Firebase platform and may be a suitable choice if you're already using other Firebase services.
+
+Implementing authentication in-house using cookies can be a viable option for smaller projects or when you have specific requirements not met by existing solutions. However, it requires a significant amount of effort and careful consideration of security best practices.
+
+> NextAuth strikes a balance between ease of use and flexibility, making it a popular choice for Next.js applications. It provides a well-structured and secure approach to authentication while allowing integration with various authentication providers and customization options.
+> 
+
+# Why Not JWT + localStorage
+
+The decision to not use JWT (JSON Web Tokens) with localStorage for authentication in Next.js applications is primarily due to the architectural differences between traditional Express apps and Next.js apps.
+
+### **Express App**
+
+In a typical Express app, the server and client are separate entities. The server handles API requests, and the client (often a single-page application) communicates with the server via API calls. In this scenario, using JWT with localStorage is a common approach for authentication:
+
+1. The client sends authentication credentials (e.g., username and password) to the server.
+2. The server verifies the credentials and generates a JWT containing user information and signs it with a secret key.
+3. The server sends the JWT back to the client.
+4. The client stores the JWT in localStorage or another client-side storage mechanism.
+5. For subsequent authenticated requests, the client includes the JWT in the request headers (typically the `Authorization` header).
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/ab73d8be-e2a7-4ed8-b205-d8639b67aa4c/Untitled.png)
+
+This approach works well in traditional client-server architectures because the client and server are separate entities, and the client needs a way to securely transmit authentication information with each request.
+
+### **Next.js App**
+
+In a Next.js application, the server and client are more tightly coupled. Next.js applications can leverage server-side rendering (SSR) and API routes, which run on the server. This architectural difference introduces a few considerations:
+
+1. **Server-Side Rendering (SSR)**: With SSR, the initial page load is rendered on the server, and subsequent page navigations can be handled on the client-side. This means that authentication information needs to be available on the server for SSR to work correctly.
+2. **API Routes**: Next.js provides a built-in way to create API routes that run on the server. These API routes can handle authentication and other server-side logic directly, without the need for a separate Express server.
+3. **Cookies**: Next.js applications can use cookies to store and transmit authentication information between the server and client. Cookies are automatically included in requests sent from the client to the server, eliminating the need to manually include authentication tokens in request headers.
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/c96d661d-e481-4e10-ae96-b6c93278dd24/Untitled.png)
+
+Using JWT with localStorage in a Next.js application can lead to potential issues and complexities:
+
+1. **Server-Side Rendering (SSR) Challenges**: To perform SSR correctly, the server needs access to the authentication information stored in localStorage, which is not possible due to the client-side nature of localStorage.
+2. **Redundancy**: Since Next.js provides built-in API routes and server-side rendering capabilities, using JWT with localStorage can introduce redundancy and unnecessary complexity.
+
+### Conclusion
+
+Instead of using JWT with localStorage, Next.js applications often leverage cookies for authentication. Cookies are automatically included in requests sent from the client to the server, making it easier to handle authentication on both the client and server sides.
+
+Next.js also provides authentication libraries like NextAuth.js, which simplify the process of implementing authentication with cookies, handling sessions, and integrating with various authentication providers (e.g., OAuth, email/password, etc.).
+
+While it is possible to use JWT with localStorage in a Next.js application, it may not be the most efficient or recommended approach due to the architectural differences between Next.js and traditional client-server applications. Leveraging cookies and built-in authentication libraries like NextAuth.js can provide a more streamlined and secure authentication experience in Next.js applications.
+
+# NextAuth
+
+NextAuth is a popular authentication library specifically designed for Next.js applications. It provides a comprehensive solution for implementing authentication in your Next.js projects, making it easier to handle user sign-in, sign-up, and session management.
+
+### **Supported Providers**
+
+One of the key features of NextAuth is its support for various authentication providers. It allows you to integrate different authentication methods into your Next.js application, including:
+
+1. **Email/Password Authentication**: NextAuth provides built-in support for email and password-based authentication. Users can sign up and sign in using their email addresses and passwords.
+2. **OAuth Providers (Social Login)**: NextAuth supports integration with popular OAuth providers, allowing users to sign in using their existing accounts from services like Google, Facebook, Twitter, GitHub, and more. This feature is commonly referred to as "social login."
+3. **Custom Providers**: In addition to the built-in providers, NextAuth allows you to create and integrate custom authentication providers. This flexibility enables you to support authentication methods specific to your application's requirements.
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/574fddf6-4d98-41b0-a655-952c57c23001/Untitled.png)
+
+### **Customization and Extensibility**
+
+While NextAuth provides a robust set of features out of the box, it also allows for customization and extensibility. You can tailor the authentication process to your specific requirements, such as adding additional authentication providers, customizing the user interface, or implementing advanced features like multi-factor authentication or social sign-in with additional providers.
+
+By leveraging NextAuth, you can streamline the authentication process in your Next.js application, providing a secure and user-friendly experience for your users. Whether you need email/password authentication, social login, or custom authentication methods, NextAuth offers a comprehensive solution tailored specifically for Next.js applications.
+
+# Catch All Routes
+
+In Next.js, catch-all routes allow you to create a single route handler that can handle multiple routes with dynamic segments. This is particularly useful when you want to handle routes that share a common prefix but have varying path segments.
+
+### **Creating a Catch-all Route**
+
+To create a catch-all route in Next.js, you need to use the `[...slug]` syntax in your route file name. Here's an example of how to set up a catch-all route for handling authentication-related routes:
+
+1. Create a new Next.js app:
+
+```bash
+npx create-next-app@latest
+```
+
+1. Create a new file `app/api/auth/[...nextauth]/route.ts` with the following content:
+
+```tsx
+import { NextRequest, NextResponse } from "next/server";
+
+export function GET(req: NextRequest) {
+  return NextResponse.json({
+    message: "Handler",
+  });
+}
+```
+
+This catch-all route will handle all routes that start with `/api/auth/`, such as `/api/auth/signin`, `/api/auth/123`, `/api/auth/random/random2`, and so on.
+
+### **Accessing Dynamic Route Segments**
+
+In a catch-all route, you can access the dynamic route segments using the `params` object passed to the route handler function. Here's an example of how to log the dynamic route segment:
+
+```tsx
+import { NextRequest, NextResponse } from "next/server";
+
+export function GET(
+  req: NextRequest,
+  { params }: { params: { nextauth: string[] } }
+) {
+  console.log(params.nextauth[0]); // Logs the first dynamic segment
+  return NextResponse.json({
+    message: "Handler",
+  });
+}
+```
+
+In this example, `params.nextauth` is an array containing the dynamic route segments. `params.nextauth` will log the first dynamic segment after `/api/auth/`.
+
+### **Testing the Catch-all Route**
+
+To test the catch-all route, start the Next.js development server:
+
+```bash
+npm run dev
+```
+
+Then, you can visit the following URLs in your browser or make requests to them using tools like cURL or Postman:
+
+- `http://localhost:3000/api/auth/signin`
+- `http://localhost:3000/api/auth/123`
+- `http://localhost:3000/api/auth/random/random2`
+
+All of these routes will be handled by the same catch-all route handler, and you should see the `{ message: "Handler" }` response in your browser or the console.
+
+> Catch-all routes in Next.js provide a convenient way to handle multiple routes with a single route handler, simplifying your routing logic and making it easier to manage routes with dynamic segments. They are particularly useful for handling routes related to authentication, user profiles, or any other routes that share a common prefix but have varying path segments.
+> 
+
+# **Give NextAuth Access to a Catch-all**
+
+To give NextAuth access to a catch-all route in Next.js 13, you need to create a file inside the `app/api/auth` directory with the naming convention `[...nextauth].ts` or `[...nextauth].js`. This catch-all route will handle all authentication-related requests.
+
+Here are the steps to set up the catch-all route:
+
+1. Create the file `app/api/auth/[...nextauth]/route.ts` (or `route.js` if you prefer JavaScript).
+2. Install the `next-auth` package by running the following command:
+
+```bash
+npm install next-auth
+```
+
+1. Inside the `route.ts` file, import the `NextAuth` function from the `next-auth` package and create a handler:
+
+```tsx
+import NextAuth from "next-auth";
+
+const handler = NextAuth({
+  // NextAuth configuration options go here
+});
+
+export { handler as GET, handler as POST };
+```
+
+In this code snippet, we import the `NextAuth` function and create a `handler` by calling `NextAuth` with the desired configuration options. We then export the `handler` as both `GET` and `POST` handlers, as NextAuth requires access to both HTTP methods.
+
+By setting up the catch-all route and exporting the `handler`, you've given NextAuth access to handle authentication-related requests in your Next.js 13 application.
+
+### **Adding Authentication Providers**
+
+NextAuth supports three broad types of authentication providers:
+
+1. **OAuth Providers**: These providers allow users to sign in using their existing accounts from services like Google, Facebook, Twitter, GitHub, and more. This is commonly referred to as "social login."
+2. **Email Provider**: This provider enables passwordless email login, where users receive a one-time password (OTP) or a magic link via email to sign in.
+3. **Credentials Provider**: This provider allows you to implement your own custom authentication strategy, such as authenticating users against a username/password database or integrating with an existing authentication system.
+
+To add authentication providers, you need to import them and configure them within the `NextAuth` options object. Here's an example of how you might add a Google OAuth provider:
+
+```tsx
+import GoogleProvider from "next-auth/providers/google";
+
+const handler = NextAuth({
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+    // Add other providers here
+  ],
+  // Other NextAuth configuration options
+});
+
+export { handler as GET, handler as POST };
+```
+
+In this example, we import the `GoogleProvider` from `next-auth/providers/google` and configure it with the required `clientId` and `clientSecret` values, which should be stored as environment variables.
+
+You can add multiple providers by including them in the `providers` array within the `NextAuth` options object.
+
+# **Credentials provider**
+
+This lets you create your own authentication strategy
+
+For example
+
+1. Email + Password
+2. Phone number
+3. Login with Metamask
+
+### **Steps to follow**
+
+1. Add a credentials provider
+
+```jsx
+import NextAuth from "next-auth"
+import CredentialsProvider from 'next-auth/providers/credentials';
+
+const handler = NextAuth({
+  providers: [
+    CredentialsProvider({
+        name: 'Credentials',
+        credentials: {
+          username: { label: 'email', type: 'text', placeholder: '' },
+          password: { label: 'password', type: 'password', placeholder: '' },
+        },
+        async authorize(credentials: any) {
+
+            return {
+                id: "user1"
+            };
+        },
+      })
+  ],
+  secret: process.env.NEXTAUTH_SECRET
+})
+
+export { handler as GET, handler as POST }
+```
+
+1. Add NEXTAUTH_URL to `.env`
+
+```jsx
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=password_nextauth
+```
+
+1. Update `App.tsx` to have a simple Appbar
+
+```jsx
+"use client";
+import { signIn, signOut } from "next-auth/react"
+
+export const Appbar = () => {
+    return <div>
+    <button onClick={() => signIn()}>Signin</button>
+    <button onClick={() => signOut()}>Sign out</button>
+  </div>
+}Click
+```
+
+1. Add `providers.tsx`
+
+```jsx
+'use client';
+import React from 'react';
+import { SessionProvider } from 'next-auth/react';
+
+export const Providers = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <SessionProvider>
+      {children}
+    </SessionProvider>
+  );
+};
+```
+
+1. Wrap `layout` with `Providers`
+
+```jsx
+import { Providers } from "./provider";
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>
+        <Providers>
+          {children}
+        </Providers>
+      </body>
+    </html>
+  );
+}
+```
+
+1. Get the user details in the top level `page.tsx` (client component)
+
+```tsx
+"use client"
+
+import { useSession } from "next-auth/react";
+
+export default function Home() {
+  const session = useSession();
+  return (
+    <div>
+      {JSON.stringify(session.data?.user)}
+    </div>
+  );
+}
+```
+
+1. Get the user details on the server (server component)
+
+```jsx
+import { getServerSession } from "next-auth"
+
+async function getUser() {
+  const session = await getServerSession();
+  return session;
+}
+
+export default async function Home() {
+  const session = await getUser();
+
+  return (
+    <div>
+      {JSON.stringify(session?.user?.name)}
+    </div>
+  );
+}
+```
+
+1. Get user in an api route (/api/user)
+
+```jsx
+import { getServerSession } from "next-auth"
+import { NextResponse } from "next/server";
+
+export async function GET() {
+    const session = await getServerSession();
+
+    return NextResponse.json({
+        name: session?.user?.name
+    })
+}
+```
+
+1. Persist more data (user id) (Ref https://next-auth.js.org/getting-started/example#using-nextauthjs-callbacks) (Ref https://next-auth.js.org/configuration/callbacks)
+
+```jsx
+  callbacks: {
+      jwt: async ({ user, token }: any) => {
+	      if (user) {
+	          token.uid = user.id;
+	      }
+	      return token;
+      },
+    session: ({ session, token, user }: any) => {
+        if (session.user) {
+            session.user.id = token.uid
+        }
+        return session
+    }
+  },
+```
+
+1. Move auth config to `lib/auth.ts`https://github.com/nextauthjs/next-auth/issues/7658#issuecomment-1683225019
+
+```jsx
+
+import CredentialsProvider from 'next-auth/providers/credentials';
+
+export const NEXT_AUTH_CONFIG = {
+    providers: [
+      CredentialsProvider({
+          name: 'Credentials',
+          credentials: {
+            username: { label: 'email', type: 'text', placeholder: '' },
+            password: { label: 'password', type: 'password', placeholder: '' },
+          },
+          async authorize(credentials: any) {
+
+              return {
+                  id: "user1",
+                  name: "asd",
+                  userId: "asd",
+                  email: "ramdomEmail"
+              };
+          },
+        }),
+    ],
+    secret: process.env.NEXTAUTH_SECRET,
+    callbacks: {
+        jwt: async ({ user, token }: any) => {
+        if (user) {
+            token.uid = user.id;
+        }
+        return token;
+        },
+      session: ({ session, token, user }: any) => {
+          if (session.user) {
+              session.user.id = token.uid
+          }
+          return session
+      }
+    },
+  }
+```
+
+Final code -
+
+https://github.com/100xdevs-cohort-2/week-16-auth-2
+
+# Adding Providers
+
+### **1] Adding Google Provider**
+
+To add the Google provider, follow these steps:
+
+1. Import the `GoogleProvider` from `next-auth/providers/google`:
+
+```jsx
+import GoogleProvider from "next-auth/providers/google";
+```
+
+1. Configure the `GoogleProvider` with your Google client ID and client secret:
+
+```jsx
+export default NextAuth({
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+    // Add other providers here
+  ],
+  // Other NextAuth configuration options
+});
+```
+
+Make sure to replace `process.env.GOOGLE_CLIENT_ID` and `process.env.GOOGLE_CLIENT_SECRET` with your actual Google client ID and client secret, respectively.
+
+1. Set up the authorized redirect URIs in the Google Cloud Console:
+    - For production: `https://{YOUR_DOMAIN}/api/auth/callback/google`
+    - For development: `http://localhost:3000/api/auth/callback/google`
+2. (Optional) Customize the Google provider options:
+
+```jsx
+GoogleProvider({
+  clientId: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  authorization: {
+    params: {
+      prompt: "consent",
+      access_type: "offline",
+      response_type: "code",
+    },
+  },
+});
+```
+
+The `authorization` option forces Google to re-issue a refresh token on every sign-in, ensuring you have access to the refresh token and access token for the Google account.
+
+### **2] Adding GitHub Provider**
+
+To add the GitHub provider, follow these steps:
+
+1. Import the `GithubProvider` from `next-auth/providers/github`:
+
+```jsx
+import GithubProvider from "next-auth/providers/github";
+```
+
+1. Configure the `GithubProvider` with your GitHub client ID and client secret:
+
+```jsx
+export default NextAuth({
+  providers: [
+    GithubProvider({
+      clientId: process.env.GITHUB_ID,
+      clientSecret: process.env.GITHUB_SECRET,
+    }),
+    // Add other providers here
+  ],
+  // Other NextAuth configuration options
+});
+```
+
+Make sure to replace `process.env.GITHUB_ID` and `process.env.GITHUB_SECRET` with your actual GitHub client ID and client secret, respectively.
+
+1. Set up the authorized callback URL in the GitHub App settings:
+    - For production: `https://{YOUR_DOMAIN}/api/auth/callback/github`
+    - For development: `http://localhost:3000/api/auth/callback/github`
+2. (Optional) When creating a GitHub App, make sure to set the "Email addresses" account permission to read-only in order to access private email addresses on GitHub.
+
+After configuring the Google and GitHub providers, users will be able to sign in to your Next.js application using their Google or GitHub accounts.
+
+# Custom Signup Page
+
+### **Adding Pages to NextAuth**
+
+NextAuth.js allows you to customize the appearance and behavior of the authentication pages by providing your own React components. This can be achieved by creating pages in the `app` directory of your Next.js application.
+
+1. Create a new file `app/signin/page.tsx` (or `page.jsx` for JavaScript):
+
+```tsx
+"use client";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
+export default function SignInPage() {
+  const router = useRouter();
+
+  return (
+    <div>
+      <button
+        onClick={async () => {
+          await signIn("google");
+        }}
+      >
+        Login with Google
+      </button>
+
+      <br />
+      <button
+        onClick={async () => {
+          await signIn("github");
+        }}
+      >
+        Login with GitHub
+      </button>
+      <br />
+      <button
+        onClick={async () => {
+          const res = await signIn("credentials", {
+            username: "",
+            password: "",
+            redirect: false,
+          });
+          console.log(res);
+          router.push("/");
+        }}
+      >
+        Login with Email
+      </button>
+    </div>
+  );
+}
+```
+
+In this example, we create a `SignInPage` component that renders buttons for signing in with Google, GitHub, and email/password credentials.
+
+1. Import and use the `signIn` function from `next-auth/react` to initiate the sign-in process for the desired provider.
+2. For the email/password sign-in, we use the `signIn("credentials", { ... })` method and pass the necessary credentials (username and password) as an object. We also set `redirect: false` to prevent automatic redirection after sign-in.
+3. After a successful sign-in, you can use the `useRouter` hook from `next/navigation` to programmatically navigate to a different page (e.g., `router.push("/")` to navigate to the home page).
+
+### **Customizing the Sign-in Component**
+
+You can further customize the `SignInPage` component by adding your desired UI elements, styling, and additional functionality. For example, you can create a reusable `SignIn` component and import it into the `SignInPage`:
+
+```tsx
+// components/SignIn.tsx
+"use client";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
+export const SignIn = () => {
+  const router = useRouter();
+
+  return (
+    <div>
+      {/* Sign-in buttons and form */}
+    </div>
+  );
+};
+```
+
+```tsx
+// app/signin/page.tsx
+"use client";
+import { SignIn } from "../components/SignIn";
+
+export default function SignInPage() {
+  return <SignIn />;
+}
+```
+
+By separating the sign-in logic into a reusable component, you can easily customize and reuse it across different pages or components in your application.
