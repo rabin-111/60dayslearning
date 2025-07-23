@@ -1,0 +1,385 @@
+# Building Paytm (1/3)
+
+Up until now, our discussions have primarily revolved around theoretical concepts. In this lecture, Harkirat takes a `practical approach` by guiding us through the hands-on process of `building a Paytm like application`   
+
+The stack for this project includes Next.js for the frontend and backend (or a separate backend), Express for auxiliary backends, Turborepo for managing the monorepo, a PostgreSQL database, Prisma as the ORM, and Tailwind for styling.
+
+> While there are `no specific notes` provided for this section, a mini guide is outlined below to assist you in navigating through the process of building the application. Therefore, it is strongly `advised to actively follow along` during the lecture for a hands-on learning experience.
+> 
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/09fe0840-9447-44ae-9474-2cb5acbd1b9a/Untitled.png)
+
+# Introduction
+
+In this hands-on lecture, we will be building a Paytm-like application. The first step is to plan the features and design the user interface (UI) and user experience (UX). For the UX, we can either follow first principles or take inspiration from existing successful websites. As for the UI, while there are tools available, finding a good one can be challenging.
+
+Next, we will focus on the high-level design, including the authentication provider, database, backend stack, frontend stack, and the modules we'll have (such as common, UI, and backend). We'll also decide on the cloud platform for deployment. Additionally, we'll delve into the low-level design, including schema design, route signatures, and frontend components. While entity-relationship diagrams can be useful, they may not be necessary unless you're a highly visual person.
+
+# **Feature planning**
+
+### **User login**
+
+1. Auth (In this case, probably email/phone)
+2. On ramp from bank, off ramp to bank
+3. Support transfers via phone number/name
+4. Support scanning a QR code for transferring to merchants
+
+### **Merchant login**
+
+1. Login with google
+2. Generate a QR Code for acceptance
+3. Merchants get an alert/notification on payment
+4. Merchant gets money offramped to bank every 2 days
+
+# **UI/UX (End User)**
+
+### **Login**
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/556972a6-3ff8-4a42-9ba3-09d6f770a985/Untitled.png)
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/af50eb7f-d67e-4125-a1f4-d1d70f85413e/Untitled.png)
+
+### Landing Page
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/496b34d6-101c-4769-bb4f-96f8b1828329/Untitled.png)
+
+### User Home Page
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/474ef942-4ee8-41d9-a442-9b79e7a66357/Untitled.png)
+
+### User Transfer Page
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/ea28a9ff-8a8e-4bc8-8a5a-8bfc86187581/Untitled.png)
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/d2882396-e37c-42a2-a41c-577c350e8864/Untitled.png)
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/30cc8444-8599-4587-85f4-093f063e86ca/Untitled.png)
+
+# **UI/UX (Merchant)**
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/dca82f36-b06c-480b-a473-7186df22706c/Untitled.png)
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/0323b047-fd9c-46f8-acad-21e64d6122c8/Untitled.png)
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/aac3031f-66d3-497c-8ac9-022c81e76850/Untitled.png)
+
+# **Architecture**
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/880da0df-75f4-4e2a-9cba-a0dd7b9ca6c5/Untitled.png)
+
+![](https://www.notion.so/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F085e8ad8-528e-47d7-8922-a23dc4016453%2F888fec18-4140-4f67-9820-7878a4897e84%2FScreenshot_2024-03-23_at_6.35.20_PM.png?table=block&id=c791d5db-4676-4d03-b8e6-587f9854dab5&cache=v2)
+
+### **Hot paths**
+
+1. Send money to someone
+2. Withdraw balance of merchant
+3. Withdraw balance of user back to bank
+4. Webhooks from banks to transfer in money
+
+### **This is ~1 month job for a 2 engineer team.**
+
+We can cut scope in either
+
+1. UI
+2. Number of features we support (remove merchant altogether)
+3. Number of services we need (merge bank server, do withdrawals directly and not in a queue assuming banks are always up)
+
+# **Stack**
+
+1. Frontend and Backend - Next.js (or Backend)
+2. Express - Auxilary backends
+3. Turborepo
+4. Postgres Database
+5. Prisma ORM
+6. Tailwind
+
+# **Bootstrap the app**
+
+- Init turborepo
+
+```bash
+ npx create-turbo@latest
+```
+
+- Rename the two Next apps to
+    1. user-app
+    2. merchant-app
+- Add tailwind to it.
+
+```bash
+cd apps/user-app
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+
+cd ../merchant-app
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+```
+
+<aside>
+💡 You can also use https://github.com/vercel/turbo/tree/main/examples/with-tailwind
+
+</aside>
+
+Update `tailwind.config.js`
+
+```jsx
+
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "../../packages/ui/**/*.{js,ts,jsx,tsx,mdx}"
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+```
+
+Update `global.css`
+
+```jsx
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+<aside>
+💡 Ensure tailwind is working as expected
+
+</aside>
+
+# **Adding prisma**
+
+Ref - https://turbo.build/repo/docs/handbook/tools/prisma
+
+1. Create a new `db` folder
+2. Initialise package.json
+
+```bash
+npm init -y
+npx tsc --init
+```
+
+1. Update package.json
+
+```jsx
+
+{
+    "name": "@repo/db",
+    "version": "0.0.0",
+    "dependencies": {
+        "@prisma/client": "^5.11.0"
+    },
+    "devDependencies": {
+        "prisma": "5.11.0"
+    },
+    "exports": {
+        "./client": "./index.ts"
+    }
+}
+```
+
+1. Update tsconfig.json
+
+```jsx
+
+{
+    "extends": "@repo/typescript-config/react-library.json",
+    "compilerOptions": {
+      "outDir": "dist"
+    },
+    "include": ["src"],
+    "exclude": ["node_modules", "dist"]
+  }
+```
+
+1. Init prisma
+
+```jsx
+npx prisma init
+```
+
+1. Start DB locally/on neon.db/on aiven
+2. Update .env with the new database URL
+3. Add a basic schema
+
+```jsx
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+}
+```
+
+1. MIgrate DB
+
+```jsx
+npx prisma migrate
+```
+
+1. Update `index.ts`
+
+```jsx
+export * from '@prisma/client';
+```
+
+1. Try adding `api/user/route.ts`
+
+```jsx
+import { NextResponse } from "next/server"
+import { PrismaClient } from "@repo/db/client";
+
+const client = new PrismaClient();
+
+export const GET = async () => {
+    await client.user.create({
+        data: {
+            email: "asd",
+            name: "adsads"
+        }
+    })
+    return NextResponse.json({
+        message: "hi there"
+    })
+}
+```
+
+# **Add a recoil/store module**
+
+- Create `store` package
+
+```bash
+cd packages
+mkdir store
+npm init -y
+npx tsc --init
+```
+
+- Install dependencies
+
+```bash
+npm i recoil
+```
+
+- Update tsconfig.json
+
+```jsx
+{
+    "extends": "@repo/typescript-config/react-library.json",
+    "compilerOptions": {
+      "outDir": "dist"
+    },
+    "include": ["src"],
+    "exclude": ["node_modules", "dist"]
+}
+```
+
+- Update package.json
+
+```jsx
+{
+  "name": "@repo/store",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "recoil": "^0.7.7"
+  }
+}
+```
+
+- Create a simple `atom` called balance in `src/atoms/balance.ts`
+
+```jsx
+import { atom } from "recoil";
+
+export const balanceAtom = atom<number>({
+    key: "balance",
+    default: 0,
+})
+```
+
+- Create a simple `hook` called `src/hooks/useBalance.ts`
+
+```jsx
+import { useRecoilValue } from "recoil"
+import { balanceAtom } from "../atoms/balance"
+
+export const useBalance = () => {
+    const value = useRecoilValue(balanceAtom);
+    return value;
+}
+```
+
+- Add export to package.json
+
+```tsx
+"exports": {
+    "./useBalance": "./src/hooks/useBalance"
+}
+```
+
+# **Import recoil in the next.js apps**
+
+- Install recoil in them
+
+```bash
+npm i recoil
+```
+
+- Add a `providers.tsx` file
+
+```jsx
+"use client"
+import { RecoilRoot } from "recoil";
+
+export const Providers = ({children}: {children: React.ReactNode}) => {
+    return <RecoilRoot>
+        {children}
+    </RecoilRoot>
+}
+```
+
+- Update `layout.tsx`
+
+```jsx
+
+ return (
+    <html lang="en">
+      <Providers>
+        <body className={inter.className}>{children}</body>
+      </Providers>
+    </html>
+  );
+```
+
+- Create a simple client component and try using the `useBalance` hook in there
+
+```jsx
+"use client";
+
+import { useBalance } from "@repo/store/useBalance";
+
+export default function() {
+  const balance = useBalance();
+  return <div>
+    hi there {balance}
+  </div>
+}
+```
+
+If you see this, we’ll try to debug it end of class. Should still work in dev mode
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/dd624914-6876-4b58-9694-424f7aa5e22a/6841dee8-1e6e-483a-9cb4-e234fe6c1cda/Untitled.png)
